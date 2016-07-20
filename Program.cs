@@ -18,7 +18,7 @@ namespace ACDuino
         static string _position;
         static string _rpm;
         static string _com = "COM4";
-        static int _baudrate = 57600;
+        static int _baudrate = 9600;
 
         static void Main(string[] args)
         {
@@ -41,7 +41,7 @@ namespace ACDuino
             AssettoCorsa ac = new AssettoCorsa();
             ac.StaticInfoInterval = 5000; // Get StaticInfo updates ever 5 seconds
             ac.GraphicsInterval = 500;
-            ac.PhysicsInterval = 5;
+            ac.PhysicsInterval = 100;
             //ac.StaticInfoUpdated += ac_StaticInfoUpdated; // Add event listener for StaticInfo
             ac.PhysicsUpdated += ac_PhysicsUpdated;
             ac.GraphicsUpdated += ac_GraphicsUpdated;
