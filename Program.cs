@@ -16,9 +16,12 @@ namespace ACDuino
         static string _laps;
         static string _speed;
         static string _position;
-        static string _rpm;
+        static int _rpm;
+        static string _rpmText;
+        static int _rpmMax;
         static string _com = "COM4";
         static int _baudrate = 9600;
+        static int _changeGearPercent = 95;
 
         static void Main(string[] args)
         {
@@ -41,8 +44,8 @@ namespace ACDuino
             AssettoCorsa ac = new AssettoCorsa();
             ac.StaticInfoInterval = 5000; // Get StaticInfo updates ever 5 seconds
             ac.GraphicsInterval = 500;
-            ac.PhysicsInterval = 100;
-            //ac.StaticInfoUpdated += ac_StaticInfoUpdated; // Add event listener for StaticInfo
+            ac.PhysicsInterval = 50;
+            ac.StaticInfoUpdated += ac_StaticInfoUpdated; // Add event listener for StaticInfo
             ac.PhysicsUpdated += ac_PhysicsUpdated;
             ac.GraphicsUpdated += ac_GraphicsUpdated;
             ac.Start(); // Connect to shared memory and start interval timers 
@@ -58,6 +61,7 @@ namespace ACDuino
             //Console.WriteLine("  Car Model: " + e.StaticInfo.CarModel);
             //Console.WriteLine("  Track:     " + e.StaticInfo.Track);
             //Console.WriteLine("  Max RPM:   " + e.StaticInfo.MaxRpm);
+            _rpmMax = e.StaticInfo.MaxRpm;
             
         }
 
@@ -66,9 +70,10 @@ namespace ACDuino
             double speed = Math.Floor(e.Physics.SpeedKmh);
             string strSpeed = "0000" + speed.ToString();
             _speed = strSpeed.Substring(strSpeed.Length - 3);
-            _gear = e.Physics.Gear.ToString();            
-            _rpm = "00000" + e.Physics.Rpms.ToString();
-            _rpm = _rpm.Substring(_rpm.Length - 5);
+            _gear = e.Physics.Gear.ToString();
+            _rpm = e.Physics.Rpms;
+            _rpmText = "00000" + e.Physics.Rpms.ToString();
+            _rpmText = _rpmText.Substring(_rpmText.Length - 5);
             
             SendArduino();
         }
@@ -87,11 +92,13 @@ namespace ACDuino
         static void SendArduino()
         {
             string texto1 = "1:" + _laps + " " + _gear + " " + _speed;
-            string texto2 = "2:" + _position + " " + _rpm;
+            string texto2 = "2:" + _position + " " + _rpmText;
+            string texto3 = "3:" + ChangeGear().ToString();
             Console.WriteLine("Enviando: " + texto1);
             Console.WriteLine("Enviando: " + texto2);
             arduino.Write(texto1 + ";");
             arduino.Write(texto2 + ";");
+            arduino.Write(texto3 + ";");
 
         }
 
@@ -99,6 +106,16 @@ namespace ACDuino
         {
             string aux = arduino.ReadLine();
             Debug.WriteLine(aux);
+        }
+
+        static int ChangeGear()
+        {
+            float aux = _rpm * 100 / _rpmMax;
+            decimal percent = Math.Ceiling((decimal)aux);
+
+            if (percent >= _changeGearPercent)
+                return 1;
+            return 0;
         }
     }
 }
